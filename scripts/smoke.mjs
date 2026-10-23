@@ -48,12 +48,19 @@ try {
   async function waitForText(text) { await waitFor(async () => (await evaluate('document.body.innerText')).includes(text), `text: ${text}`) }
   async function clickText(text) { const ok = await evaluate(`(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.trim()===${JSON.stringify(text)});if(!b)return false;b.click();return true})()`); assert.ok(ok, `Could not find button “${text}”`) }
   async function clickLabel(label) { const ok = await evaluate(`(()=>{const b=document.querySelector(${JSON.stringify(`[aria-label="${label}"]`)});if(!b)return false;b.click();return true})()`); assert.ok(ok, `Could not find control “${label}”`) }
+  async function pressKey(key, modifiers = 0, windowsVirtualKeyCode) { await send('Input.dispatchKeyEvent', { type:'keyDown', key, code:key, modifiers, windowsVirtualKeyCode }); await send('Input.dispatchKeyEvent', { type:'keyUp', key, code:key, modifiers, windowsVirtualKeyCode }) }
   async function fill(selector, value) { const ok = await evaluate(`(()=>{const x=document.querySelector(${JSON.stringify(selector)});if(!x)return false;x.value=${JSON.stringify(value)};x.dispatchEvent(new Event('input',{bubbles:true}));x.dispatchEvent(new Event('change',{bubbles:true}));return true})()`); assert.ok(ok, `Could not fill ${selector}`) }
   async function chooseBackup(payload) { const ok = await evaluate(`(()=>{const input=document.querySelector('input[aria-label="Import a backup file"]');if(!input)return false;const file=new File([${JSON.stringify(typeof payload === 'string' ? payload : JSON.stringify(payload))}],'backup.json',{type:'application/json'});const transfer=new DataTransfer();transfer.items.add(file);Object.defineProperty(input,'files',{value:transfer.files,configurable:true});input.dispatchEvent(new Event('change',{bubbles:true}));return true})()`); assert.ok(ok, 'Could not select a backup file') }
   await send('Page.enable'); await send('Runtime.enable'); await send('Log.enable'); await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true })
   await send('Page.navigate', { url: `http://127.0.0.1:${devPort}/` })
   await waitForText("You're all caught up!")
   assert.equal(await evaluate('document.documentElement.scrollWidth <= innerWidth'), true, 'Mobile view must not overflow horizontally')
+  await send('Emulation.setDeviceMetricsOverride', { width:320,height:844,deviceScaleFactor:1,mobile:true }); assert.equal(await evaluate('document.documentElement.scrollWidth <= innerWidth'), true, '320px mobile view must not overflow horizontally')
+  await send('Emulation.setDeviceMetricsOverride', { width:390,height:844,deviceScaleFactor:1,mobile:true })
+  await clickText('Add reminder'); await waitForText('What do you need to remember?'); assert.equal(await evaluate("document.activeElement.getAttribute('aria-label')"), 'Close dialog', 'Dialog should move keyboard focus inside')
+  await pressKey('Tab',0,9); assert.equal(await evaluate('document.activeElement.name'), 'title', 'Tab should move to the first form field')
+  await pressKey('Tab',8,9); assert.equal(await evaluate("document.activeElement.getAttribute('aria-label')"), 'Close dialog', 'Shift+Tab should wrap within the dialog')
+  await pressKey('Escape',0,27); assert.equal(await evaluate("!!document.querySelector('[role=dialog]')"), false, 'Escape should close the dialog')
   await evaluate("localStorage.setItem('unrelated:test-key','keep me')")
   await clickText('Add your first place')
   await fill('input[name="name"]', 'Neighborhood Pharmacy')
