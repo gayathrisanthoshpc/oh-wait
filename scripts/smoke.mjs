@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
-import { access, mkdtemp, rm } from 'node:fs/promises'
+import { access, mkdtemp, readFile, readdir, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { createServer } from 'node:net'
@@ -49,6 +49,7 @@ try {
   async function clickText(text) { const ok = await evaluate(`(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.trim()===${JSON.stringify(text)});if(!b)return false;b.click();return true})()`); assert.ok(ok, `Could not find button “${text}”`) }
   async function clickLabel(label) { const ok = await evaluate(`(()=>{const b=document.querySelector(${JSON.stringify(`[aria-label="${label}"]`)});if(!b)return false;b.click();return true})()`); assert.ok(ok, `Could not find control “${label}”`) }
   async function fill(selector, value) { const ok = await evaluate(`(()=>{const x=document.querySelector(${JSON.stringify(selector)});if(!x)return false;x.value=${JSON.stringify(value)};x.dispatchEvent(new Event('input',{bubbles:true}));x.dispatchEvent(new Event('change',{bubbles:true}));return true})()`); assert.ok(ok, `Could not fill ${selector}`) }
+  async function chooseBackup(payload) { const ok = await evaluate(`(()=>{const input=document.querySelector('input[aria-label="Import a backup file"]');if(!input)return false;const file=new File([${JSON.stringify(typeof payload === 'string' ? payload : JSON.stringify(payload))}],'backup.json',{type:'application/json'});const transfer=new DataTransfer();transfer.items.add(file);Object.defineProperty(input,'files',{value:transfer.files,configurable:true});input.dispatchEvent(new Event('change',{bubbles:true}));return true})()`); assert.ok(ok, 'Could not select a backup file') }
   await send('Page.enable'); await send('Runtime.enable'); await send('Log.enable'); await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true })
   await send('Page.navigate', { url: `http://127.0.0.1:${devPort}/` })
   await waitForText("You're all caught up!")
@@ -89,6 +90,11 @@ try {
   await clickLabel('My Places'); await action("[...document.querySelectorAll('.place-card')].find(c=>c.innerText.includes('Library')).querySelector('.place-actions button:last-child').click()"); await waitForText('Move reminders to'); assert.equal(await evaluate("[...document.querySelectorAll('.dialog button')].find(b=>b.textContent.includes('Reassign reminders')).disabled"), true, 'Reassignment requires an explicit destination'); await fill('#reassign-place', await evaluate("[...document.querySelector('#reassign-place').options].find(o=>o.text==='Town Pharmacy').value")); await clickText('Reassign reminders'); await waitForText('Reminders moved to Town Pharmacy')
   await clickLabel('My Reminders'); await waitForText('Return library book'); assert.equal(await evaluate("[...document.querySelectorAll('.reminder-row')].find(r=>r.innerText.includes('Return library book')).innerText.includes('Town Pharmacy')"), true)
   await clickText('Activity'); await waitForText('Simulated arrival at Neighborhood Pharmacy'); await waitForText('Completed reminder: Buy medicine')
+  await clickText('Settings'); await send('Page.setDownloadBehavior', { behavior:'allow', downloadPath:tempProfile }); await clickText('Export backup'); await waitForText('Your backup file is ready.')
+  const backupName = await waitFor(async () => (await readdir(tempProfile)).find(name => name.startsWith('oh-wait-backup-') && name.endsWith('.json')), 'downloaded backup file')
+  const backup = JSON.parse(await readFile(path.join(tempProfile, backupName), 'utf8')); assert.equal(backup.version, 1); assert.equal(backup.places.length, 2, 'Exported backup should include the saved places')
+  await chooseBackup({ version:1, places:[{id:'backup-place',name:'Backup Pharmacy',category:'Pharmacy',description:'Restored from backup',createdAt:new Date().toISOString()}], reminders:[], activity:[] }); await waitForText('Your backup has been restored.')
+  await clickText('Settings'); await chooseBackup('{ invalid json'); await waitForText('not a valid Oh, Wait! backup'); await clickLabel('My Places'); await waitForText('Backup Pharmacy')
   await clickText('Settings'); await clickText('Clear all app data'); await waitForText('Clear your Oh, Wait! data?'); await clickText('Clear data'); await waitForText('Your app data has been cleared.')
   assert.equal(await evaluate("localStorage.getItem('unrelated:test-key')"), 'keep me', 'Clear data must retain unrelated localStorage entries')
   await clickLabel('My Places'); await waitForText('Every reminder needs a place')
