@@ -95,5 +95,18 @@ export function useOhWaitData() {
     setStorageWarning(false)
   }
 
-  return { data, storageWarning, updateData, saveReminder, savePlace, completeReminder, snoozeReminder, deleteReminder, recordArrival, deletePlace, clearData }
+  function loadDemoData() {
+    if (data.places.length || data.reminders.length) return false
+    const createdAt = new Date().toISOString()
+    const pharmacy: Place = { id:uid(), name:'Neighborhood Pharmacy', category:'Pharmacy', description:'An example place for your everyday errands.', createdAt }
+    const market: Place = { id:uid(), name:'Corner Grocery', category:'Groceries', description:'A nearby shop for the little things.', createdAt }
+    const reminders: Reminder[] = [
+      { id:uid(), title:'Pick up my prescription', description:'Ask for the refill at the counter.', placeId:pharmacy.id, createdAt, dueAt:'', status:'active', snoozedUntil:'' },
+      { id:uid(), title:'Get milk and bread', description:'The usual, before heading home.', placeId:market.id, createdAt, dueAt:'', status:'active', snoozedUntil:'' },
+    ]
+    updateData({ version:1, demoData:true, places:[pharmacy,market], reminders, activity:[event('Loaded 2 demo places and 2 demo reminders'), ...data.activity] })
+    return true
+  }
+
+  return { data, storageWarning, updateData, saveReminder, savePlace, completeReminder, snoozeReminder, deleteReminder, recordArrival, deletePlace, clearData, loadDemoData }
 }

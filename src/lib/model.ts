@@ -1,7 +1,7 @@
 export type Place = { id: string; name: string; category: string; description: string; createdAt: string }
 export type Reminder = { id: string; title: string; description: string; placeId: string; createdAt: string; dueAt: string; status: 'active' | 'completed'; snoozedUntil: string }
 export type Activity = { id: string; type: string; text: string; at: string }
-export type Data = { version: 1; places: Place[]; reminders: Reminder[]; activity: Activity[] }
+export type Data = { version: 1; places: Place[]; reminders: Reminder[]; activity: Activity[]; demoData?: boolean }
 export const emptyData: Data = { version: 1, places: [], reminders: [], activity: [] }
 export const uid = () => crypto.randomUUID()
 export function event(text: string): Activity { return { id: uid(), type: text.split(' ')[0], text, at: new Date().toISOString() } }
@@ -19,7 +19,7 @@ function normalizeData(serialized: string, strict: boolean): Data | null {
     const reminders = rawReminders.filter((r): r is Reminder => isObject(r) && isText(r.id) && isText(r.title) && r.title.trim().length > 0 && isText(r.placeId) && placeIds.has(r.placeId) && isText(r.createdAt) && (r.status === 'active' || r.status === 'completed')).map(r => ({ id:r.id, title:r.title, description:isText(r.description)?r.description:'', placeId:r.placeId, createdAt:r.createdAt, dueAt:isText(r.dueAt)?r.dueAt:'', status:r.status, snoozedUntil:isText(r.snoozedUntil)?r.snoozedUntil:'' }))
     const activity = rawActivity.filter((a): a is Activity => isObject(a) && isText(a.id) && isText(a.text) && isText(a.at)).map(a => ({id:a.id,type:isText(a.type)?a.type:'Activity',text:a.text,at:a.at})).slice(0,250)
     if (strict && (places.length !== rawPlaces.length || reminders.length !== rawReminders.length || activity.length !== Math.min(rawActivity.length, 250))) return null
-    return { version:1, places, reminders, activity }
+    return { version:1, places, reminders, activity, ...(raw.demoData === true ? { demoData:true } : {}) }
   } catch { return null }
 }
 export function parseData(serialized: string): Data | null { return normalizeData(serialized, true) }
