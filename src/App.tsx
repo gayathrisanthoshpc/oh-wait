@@ -1,122 +1,89 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  ArrowDownRight, ArrowRight, Bell, Check, CheckCircle2, CircleHelp,
+  Clock3, Coffee, House, MapPin, MoreHorizontal, Plus, Search, Settings as SettingsIcon,
+  ShieldCheck, Sparkles, Trash2, X, Pencil, ListTodo, Activity as ActivityIcon,
+} from 'lucide-react'
 import './App.css'
-
+import { emptyData, event, readData, uid, type Activity, type Data, type Place, type Reminder } from './lib/model'
+type View = 'Home' | 'My Reminders' | 'My Places' | 'Activity' | 'Settings'
+const KEY = 'oh-wait:data:v1'
+const clockNow = () => new Date().valueOf()
+function persistData(data: Data) { try { localStorage.setItem(KEY, JSON.stringify(data)) } catch { /* Storage may be disabled or full; the in-memory app remains usable. */ } }
 function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+  const [data, setData] = useState<Data>(readData)
+  const [view, setView] = useState<View>('Home')
+  const [modal, setModal] = useState<'reminder'|'place'|'arrival'|'clear'|'deletePlace'|null>(null)
+  const [editing, setEditing] = useState<Reminder | Place | null>(null)
+  const [selectedPlace, setSelectedPlace] = useState('')
+  const [placeToDelete, setPlaceToDelete] = useState<Place | null>(null)
+  const [query, setQuery] = useState('')
+  const [notice, setNotice] = useState('')
+  const [now, setNow] = useState(0)
+  useEffect(() => { persistData(data) }, [data])
+  useEffect(() => { const tick = () => setNow(Date.now()); tick(); window.addEventListener('focus', tick); const id = window.setInterval(tick, 60_000); return () => { window.removeEventListener('focus', tick); clearInterval(id) } }, [])
+  useEffect(() => { if (!notice) return; const id = window.setTimeout(() => setNotice(''), 3200); return () => clearTimeout(id) }, [notice])
+  const placeMap = useMemo(() => new Map(data.places.map(p => [p.id, p])), [data.places])
+  const active = data.reminders.filter(r => r.status === 'active')
+  const completed = data.reminders.filter(r => r.status === 'completed')
+  const latest = [...data.activity].sort((a,b) => b.at.localeCompare(a.at))
+  function update(next: Data) { setData(next) }
+  function openReminder(r?: Reminder) { setEditing(r || null); setModal('reminder') }
+  function openPlace(p?: Place) { setEditing(p || null); setModal('place') }
+  function saveReminder(form: HTMLFormElement) {
+    const fd = new FormData(form); const title = String(fd.get('title') || '').trim(); const placeId = String(fd.get('placeId') || '')
+    if (!title || !placeMap.has(placeId)) { setNotice('Add a task and choose one of your saved places.'); return }
+    const isEdit = !!editing && 'title' in editing
+    const old = isEdit ? editing as Reminder : null
+    const item: Reminder = { id: old?.id || uid(), title, description: String(fd.get('description') || '').trim(), placeId, createdAt: old?.createdAt || new Date().toISOString(), dueAt: String(fd.get('dueAt') || ''), status: old?.status || 'active', snoozedUntil: old?.snoozedUntil || '' }
+    update({ ...data, reminders: old ? data.reminders.map(r => r.id === old.id ? item : r) : [item, ...data.reminders], activity: [event(`${old ? 'Edited' : 'Created'} reminder: ${title}`), ...data.activity] })
+    setModal(null); setNotice(old ? 'Reminder updated.' : 'Reminder saved. You’ll thank yourself later.')
+  }
+  function savePlace(form: HTMLFormElement) {
+    const fd = new FormData(form); const name = String(fd.get('name') || '').trim(); if (!name) { setNotice('Give your place a name first.'); return }
+    const isEdit = !!editing && 'category' in editing; const old = isEdit ? editing as Place : null
+    const place: Place = { id: old?.id || uid(), name, category: String(fd.get('category') || '').trim(), description: String(fd.get('description') || '').trim(), createdAt: old?.createdAt || new Date().toISOString() }
+    update({ ...data, places: old ? data.places.map(p => p.id === old.id ? place : p) : [...data.places, place], activity: [event(`${old ? 'Edited' : 'Added'} place: ${name}`), ...data.activity] })
+    setModal(null); setNotice(old ? 'Place updated.' : 'Place added.')
+  }
+  function complete(r: Reminder) { update({ ...data, reminders: data.reminders.map(x => x.id === r.id ? { ...x, status: 'completed', snoozedUntil: '' } : x), activity: [event(`Completed reminder: ${r.title}`), ...data.activity] }); setNotice('Nicely done. One less thing to remember.') }
+  function snooze(r: Reminder, minutes: number) { const until = new Date(clockNow() + minutes*60_000).toISOString(); update({ ...data, reminders: data.reminders.map(x => x.id === r.id ? { ...x, snoozedUntil: until } : x), activity: [event(`Snoozed reminder: ${r.title} for ${minutes === 30 ? '30 minutes' : '1 hour'}`), ...data.activity] }); setNow(clockNow()); setNotice(`Snoozed for ${minutes === 30 ? '30 minutes' : '1 hour'}.`); setModal(null) }
+  function removeReminder(r: Reminder) { if (!window.confirm(`Delete “${r.title}”?`)) return; update({ ...data, reminders: data.reminders.filter(x => x.id !== r.id), activity: [event(`Deleted reminder: ${r.title}`), ...data.activity] }); setNotice('Reminder deleted.') }
+  function arrive(place: Place) { setSelectedPlace(place.id); setModal('arrival'); const key = `oh-wait:last-arrival:${place.id}`; let last = 0; try { last = Number(localStorage.getItem(key) || 0) } catch { /* Cooldown is best effort when browser storage is unavailable. */ } // A 15-second per-place cooldown deduplicates rapid clicks while allowing a later simulation.
+    if (clockNow() - last > 15_000) { try { localStorage.setItem(key, String(clockNow())) } catch { /* Activity still records in memory. */ } update({ ...data, activity: [event(`Simulated arrival at ${place.name}`), ...data.activity] }) } }
+  function dueAtPlace(placeId: string) { return active.filter(r => r.placeId === placeId && (!r.snoozedUntil || new Date(r.snoozedUntil).getTime() <= now) && (!r.dueAt || new Date(r.dueAt).getTime() <= now)) }
+  function deletePlace(place: Place) { setPlaceToDelete(place); setModal('deletePlace') }
+  function confirmDeletePlace(mode: 'reassign' | 'remove', reassignmentId = '') { if (!placeToDelete) return; const place = placeToDelete; const affected = data.reminders.filter(r => r.placeId === place.id); const target = data.places.find(p => p.id === reassignmentId && p.id !== place.id); if (mode === 'reassign' && !target && affected.length) { setNotice('Choose another saved place first.'); return } update({ ...data, places: data.places.filter(p => p.id !== place.id), reminders: mode === 'reassign' && target ? data.reminders.map(r => r.placeId === place.id ? { ...r, placeId: target.id } : r) : data.reminders.filter(r => r.placeId !== place.id), activity: [event(mode === 'reassign' && target ? `Deleted place: ${place.name}; reassigned ${affected.length} reminder${affected.length === 1 ? '' : 's'} to ${target.name}` : `Deleted place and ${affected.length} reminder${affected.length === 1 ? '' : 's'}: ${place.name}`), ...data.activity] }); setModal(null); setPlaceToDelete(null); setNotice(mode === 'reassign' && target ? `Reminders moved to ${target.name}.` : 'Place and associated reminders removed.') }
+  const nav = [{ name: 'Home' as View, icon: House }, { name: 'My Reminders' as View, icon: ListTodo }, { name: 'My Places' as View, icon: MapPin }, { name: 'Activity' as View, icon: ActivityIcon }, { name: 'Settings' as View, icon: SettingsIcon }]
+  const shown = query ? active.filter(r => r.title.toLowerCase().includes(query.toLowerCase())) : active
+  return <div className="app-shell">
+    <aside className="sidebar"><a className="brand" href="#home" onClick={e=>{e.preventDefault();setView('Home')}}><span className="brand-mark"><Check size={19}/></span><span>Oh, Wait!<small>Remember it when it matters.</small></span></a><div className="side-label">YOUR SPACE</div><nav>{nav.map(item => <button key={item.name} className={`nav-item ${view === item.name ? 'selected' : ''}`} onClick={() => setView(item.name)}><item.icon size={18}/><span>{item.name}</span>{item.name === 'My Reminders' && active.length > 0 && <b>{active.length}</b>}</button>)}</nav><div className="sidebar-bottom"><div className="simulation-note"><span className="pulse-dot"/><div><strong>Simulation mode</strong><small>Arrival is always in your hands.</small></div></div><button className="profile" onClick={()=>setView('Settings')}><div className="avatar">OW</div><span><strong>Your little assistant</strong><small>Private to this browser</small></span><MoreHorizontal size={18}/></button></div></aside>
+    <main className="main-area"><header className="topbar"><div className="crumb"><span>Oh, Wait!</span><ArrowRight size={14}/><strong>{view}</strong></div><div className="top-actions"><span className="local-badge"><ShieldCheck size={15}/> Saved on this device</span><button className="icon-btn" aria-label="Open settings" onClick={()=>setView('Settings')}><CircleHelp size={18}/></button></div></header>
+    <div className="page-content">
+      {view === 'Home' && <><section className="welcome"><div><div className="eyebrow"><Sparkles size={14}/> YOUR DAY, A LITTLE LIGHTER</div><h1>Oh, Wait<span>!</span></h1><p className="welcome-copy">A friendly nudge for the things you want to remember,<br className="desktop-break"/> right where you need to do them.</p></div><button className="button primary add-main" onClick={()=>openReminder()}><Plus size={18}/> Add reminder</button></section>
+        <section className="stats"><Stat icon={<Bell/>} value={active.length} label="Active reminders" tone="lime"/><Stat icon={<MapPin/>} value={data.places.length} label="Saved places" tone="peach"/><Stat icon={<CheckCircle2/>} value={completed.length} label="All-time completed" tone="blue"/></section>
+        <div className="home-grid"><section className="panel upcoming-panel"><div className="section-heading"><div><span className="eyebrow muted">THE LITTLE THINGS</span><h2>Coming up</h2></div><button className="text-button" onClick={()=>setView('My Reminders')}>All reminders <ArrowRight size={15}/></button></div>
+          {active.length ? <div className="reminder-list">{active.slice(0,4).map(r=><ReminderRow key={r.id} reminder={r} place={placeMap.get(r.placeId)} onComplete={()=>complete(r)} onEdit={()=>openReminder(r)} onSnooze={(n)=>snooze(r,n)} onDelete={()=>removeReminder(r)} now={now}/>)}</div> : <EmptyState icon={<Coffee/>} title="You're all caught up!" text={data.places.length ? 'Add a reminder and we’ll help you remember it at the right place.' : 'Start by saving a place you visit, then add something to remember there.'} action={data.places.length ? 'Add your first reminder' : 'Add your first place'} onClick={()=>data.places.length ? openReminder() : openPlace()}/>}</section>
+          <section className="panel activity-preview"><div className="section-heading"><div><span className="eyebrow muted">A LITTLE HISTORY</span><h2>Recent activity</h2></div><button className="icon-btn" aria-label="View activity" onClick={()=>setView('Activity')}><ArrowRight size={17}/></button></div>{latest.length ? <div className="timeline">{latest.slice(0,4).map(a=><ActivityRow key={a.id} item={a}/>)}</div> : <div className="activity-empty"><div className="empty-icon"><ActivityIcon size={19}/></div><strong>Your story starts here</strong><p>Things you complete and places you visit will show up here.</p></div>}</section></div>
+        <div className="arrival-banner"><div className="arrival-art"><MapPin size={24}/><span/></div><div><span className="eyebrow">OUT AND ABOUT?</span><h3>Try a little arrival, right here.</h3><p>Simulate arriving somewhere to see what you need to remember.</p></div><button className="button secondary" onClick={()=>setView('My Places')}>Explore places <ArrowRight size={16}/></button></div></>}
+      {view === 'My Reminders' && <><PageHeading kicker="YOUR MEMORY, ORGANIZED" title="My reminders" copy="Everything you want to remember, tied to the places you go." action={<button className="button primary" onClick={()=>openReminder()}><Plus size={17}/> Add reminder</button>}/><div className="filter-bar"><div className="search-box"><Search size={16}/><input aria-label="Search reminders" placeholder="Find a reminder..." value={query} onChange={e=>setQuery(e.target.value)}/></div><span>{shown.length} active · {completed.length} completed</span></div>{shown.length ? <div className="panel reminder-page-list">{shown.map(r=><ReminderRow key={r.id} reminder={r} place={placeMap.get(r.placeId)} onComplete={()=>complete(r)} onEdit={()=>openReminder(r)} onSnooze={n=>snooze(r,n)} onDelete={()=>removeReminder(r)} now={now}/>)}</div> : <EmptyState icon={<ListTodo/>} title={query ? 'No matches just yet' : 'Nothing slipping through the cracks.'} text={query ? 'Try another search.' : 'Add a reminder and choose where you need to do it.'} action="Add a reminder" onClick={()=>openReminder()}/>}</>}
+      {view === 'My Places' && <><PageHeading kicker="YOUR EVERYDAY SPOTS" title="My places" copy="Save the places you go. Your reminders will be ready when you are." action={<button className="button primary" onClick={()=>openPlace()}><Plus size={17}/> Add a place</button>}/><div className="prototype-callout"><div className="callout-icon"><MapPin size={18}/></div><div><strong>Arrival is simulated in this prototype</strong><p>Choose “Simulate Arrival” to check reminders at a place. Oh, Wait! does not track your location.</p></div></div>{data.places.length ? <div className="places-grid">{data.places.map(p=>{const n=active.filter(r=>r.placeId===p.id).length;return <article className="place-card" key={p.id}><div className="place-card-top"><span className="place-icon"><MapPin size={19}/></span><button className="icon-btn" aria-label={`Edit ${p.name}`} onClick={()=>openPlace(p)}><Pencil size={16}/></button></div><span className="place-category">{p.category || 'SAVED PLACE'}</span><h3>{p.name}</h3><p className="place-description">{p.description || 'Your reminders for this spot will be waiting here.'}</p><div className="place-card-footer"><span>{n} active reminder{n===1?'':'s'}</span><button className="button primary simulate" onClick={()=>arrive(p)}><MapPin size={15}/> Simulate Arrival</button></div><div className="place-actions"><button onClick={()=>openPlace(p)}>Edit place</button><button onClick={()=>deletePlace(p)}>Delete</button></div></article>})}</div> : <EmptyState icon={<MapPin/>} title="Every reminder needs a place" text="Save your pharmacy, grocery store, or anywhere you need a nudge." action="Add your first place" onClick={()=>openPlace()}/>}</>}
+      {view === 'Activity' && <><PageHeading kicker="THE LITTLE WINS" title="Activity" copy="A quiet record of the things you’ve remembered and done."/>{latest.length ? <div className="panel activity-page"><div className="timeline">{latest.map(a=><ActivityRow key={a.id} item={a}/>)}</div></div> : <EmptyState icon={<ActivityIcon/>} title="Your story starts here" text="When you create a reminder, visit a place, or check something off, it’ll appear here."/>}</>}
+      {view === 'Settings' && <><PageHeading kicker="A FEW DETAILS" title="Settings" copy="Simple, private, and right where you left it."/><div className="settings-grid"><section className="panel settings-card"><div className="settings-icon"><Sparkles size={19}/></div><span className="eyebrow muted">ABOUT</span><h2>Oh, Wait!</h2><p>Version 1.0.0</p><div className="divider"/><span className="eyebrow muted">YOUR PRIVACY</span><p className="privacy-copy">Your reminders and saved places are stored locally in this browser. This prototype does not require an account or send your reminder data to a backend.</p><div className="privacy-foot"><ShieldCheck size={16}/> Your data stays on this device</div></section><section className="panel settings-card"><span className="eyebrow muted">START FRESH</span><h2>Clear app data</h2><p>Remove all your reminders, saved places, and activity history from this browser.</p><button className="button danger-outline" onClick={()=>setModal('clear')}><Trash2 size={16}/> Clear all app data</button><small className="settings-fineprint">Other websites’ data in this browser won’t be affected.</small></section></div></>}
+    </div></main>
+    <nav className="mobile-nav">{nav.map(item=><button key={item.name} className={view===item.name?'active':''} onClick={()=>setView(item.name)} aria-label={item.name}><item.icon size={19}/><span>{item.name==='My Reminders'?'Reminders':item.name==='My Places'?'Places':item.name}</span></button>)}</nav>
+    {modal === 'reminder' && <Dialog title={editing && 'title' in editing ? 'Edit reminder' : 'What do you need to remember?'} onClose={()=>setModal(null)}><form onSubmit={e=>{e.preventDefault();saveReminder(e.currentTarget)}}><label>Task title<input name="title" autoFocus placeholder="e.g. Pick up my prescription" defaultValue={editing && 'title' in editing ? editing.title : ''} maxLength={100}/></label><label>Description <span className="optional">Optional</span><textarea name="description" placeholder="Add a helpful detail..." defaultValue={editing && 'title' in editing ? editing.description : ''} rows={3}/></label><label>Place<select name="placeId" defaultValue={editing && 'title' in editing ? editing.placeId : ''} required><option value="" disabled>Choose a saved place</option>{data.places.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>{!data.places.length && <div className="inline-help">No places saved yet. <button type="button" className="link-button" onClick={()=>{setModal('place');setEditing(null)}}>Add a place first</button></div>}<label>Due date and time <span className="optional">Optional</span><input name="dueAt" type="datetime-local" defaultValue={editing && 'title' in editing && editing.dueAt ? new Date(new Date(editing.dueAt).getTime()-new Date(editing.dueAt).getTimezoneOffset()*60_000).toISOString().slice(0,16) : ''}/></label><div className="dialog-actions"><button type="button" className="button secondary" onClick={()=>setModal(null)}>Cancel</button><button className="button primary" disabled={!data.places.length}><Check size={16}/> Save reminder</button></div></form></Dialog>}
+    {modal === 'place' && <Dialog title={editing && 'category' in editing ? 'Edit place' : 'Add a place'} onClose={()=>setModal(null)}><form onSubmit={e=>{e.preventDefault();savePlace(e.currentTarget)}}><label>Place name<input name="name" autoFocus placeholder="e.g. Green Street Pharmacy" defaultValue={editing && 'category' in editing ? editing.name : ''} maxLength={70}/></label><label>Category <span className="optional">Optional</span><input name="category" placeholder="Pharmacy, groceries, home..." defaultValue={editing && 'category' in editing ? editing.category : ''} maxLength={40}/></label><label>Note <span className="optional">Optional</span><textarea name="description" rows={3} placeholder="Anything useful to remember about this place?" defaultValue={editing && 'category' in editing ? editing.description : ''}/></label><div className="dialog-actions"><button type="button" className="button secondary" onClick={()=>setModal(null)}>Cancel</button><button className="button primary"><Plus size={16}/> Save place</button></div></form></Dialog>}
+    {modal === 'arrival' && <Dialog title="Oh, wait! You have something to do here." onClose={()=>setModal(null)} wide><div className="arrival-dialog-intro"><div className="arrival-large-icon"><MapPin size={22}/></div><div><span className="eyebrow">SIMULATED ARRIVAL</span><h3>{placeMap.get(selectedPlace)?.name}</h3><p>Here are the reminders saved for this place.</p></div></div>{dueAtPlace(selectedPlace).length ? <div className="arrival-matches">{dueAtPlace(selectedPlace).map(r=><div className="arrival-match" key={r.id}><div><strong>{r.title}</strong>{r.description&&<p>{r.description}</p>}</div><div className="match-actions"><button className="icon-btn complete-btn" aria-label={`Complete ${r.title}`} onClick={()=>complete(r)}><Check size={18}/></button><button className="icon-btn" aria-label={`Snooze ${r.title} 30 minutes`} onClick={()=>snooze(r,30)}>30m</button><button className="icon-btn" aria-label={`Snooze ${r.title} 1 hour`} onClick={()=>snooze(r,60)}>1h</button></div></div>)}</div> : <div className="arrival-empty"><div className="empty-icon"><CheckCircle2 size={21}/></div><strong>All clear at {placeMap.get(selectedPlace)?.name}.</strong><p>No reminders due here right now. You’re right on track.</p></div>}<div className="simulation-disclaimer"><ShieldCheck size={15}/> This is a simulation. Your location is never tracked.</div><div className="dialog-actions"><button className="button secondary" onClick={()=>setModal(null)}>Done</button></div></Dialog>}
+    {modal === 'deletePlace' && placeToDelete && <Dialog title={`Delete ${placeToDelete.name}?`} onClose={()=>{setModal(null);setPlaceToDelete(null)}}><p className="confirm-copy">{data.reminders.filter(r=>r.placeId===placeToDelete.id).length ? `${data.reminders.filter(r=>r.placeId===placeToDelete.id).length} reminder${data.reminders.filter(r=>r.placeId===placeToDelete.id).length===1?' is':'s are'} linked to this place. Choose what should happen to them.` : 'This place has no linked reminders.'}</p>{data.reminders.some(r=>r.placeId===placeToDelete.id) && <label className="delete-reassign-label">Move reminders to<select id="reassign-place" defaultValue=""><option value="" disabled>Choose another saved place</option>{data.places.filter(p=>p.id!==placeToDelete.id).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>}<div className="dialog-actions delete-place-actions"><button className="button secondary" onClick={()=>{setModal(null);setPlaceToDelete(null)}}>Cancel</button>{data.reminders.some(r=>r.placeId===placeToDelete.id) && data.places.some(p=>p.id!==placeToDelete.id) && <button className="button secondary" onClick={()=>confirmDeletePlace('reassign',(document.getElementById('reassign-place') as HTMLSelectElement).value)}>Reassign reminders</button>}<button className="button danger" onClick={()=>confirmDeletePlace('remove')}>{data.reminders.some(r=>r.placeId===placeToDelete.id)?'Delete place & reminders':'Delete place'}</button></div></Dialog>}
+    {modal === 'clear' && <Dialog title="Clear your Oh, Wait! data?" onClose={()=>setModal(null)}><p className="confirm-copy">This removes all saved reminders, places, and activity from this browser. This can’t be undone.</p><div className="dialog-actions"><button className="button secondary" onClick={()=>setModal(null)}>Keep my data</button><button className="button danger" onClick={()=>{try { localStorage.removeItem(KEY);Object.keys(localStorage).filter(k=>k.startsWith('oh-wait:last-arrival:')).forEach(k=>localStorage.removeItem(k)) } catch { /* Still reset the in-memory app if storage has become unavailable. */ }setData(emptyData);setModal(null);setView('Home');setNotice('Your app data has been cleared.')}}><Trash2 size={15}/> Clear data</button></div></Dialog>}
+    {notice && <div className="toast" role="status"><CheckCircle2 size={18}/>{notice}<button aria-label="Dismiss notification" onClick={()=>setNotice('')}><X size={16}/></button></div>}
+  </div>
 }
-
+function Stat({icon,value,label,tone}:{icon:React.ReactNode;value:number;label:string;tone:string}){return <article className="stat-card"><span className={`stat-icon ${tone}`}>{icon}</span><div><strong>{value}</strong><span>{label}</span></div><ArrowDownRight className="stat-arrow" size={16}/></article>}
+function PageHeading({kicker,title,copy,action}:{kicker:string;title:string;copy:string;action?:React.ReactNode}){return <section className="page-heading"><div><span className="eyebrow">{kicker}</span><h1>{title}</h1><p>{copy}</p></div>{action}</section>}
+function EmptyState({icon,title,text,action,onClick}:{icon:React.ReactNode;title:string;text:string;action?:string;onClick?:()=>void}){return <div className="empty-state"><div className="empty-icon">{icon}</div><h3>{title}</h3><p>{text}</p>{action&&<button className="button secondary" onClick={onClick}><Plus size={16}/>{action}</button>}</div>}
+function ReminderRow({reminder:r,place,onComplete,onEdit,onSnooze,onDelete,now}:{reminder:Reminder;place?:Place;onComplete:()=>void;onEdit:()=>void;onSnooze:(n:number)=>void;onDelete:()=>void;now:number}){const snoozed=!!r.snoozedUntil&&new Date(r.snoozedUntil).getTime()>now;return <article className="reminder-row"><button className="check-circle" aria-label={`Complete ${r.title}`} onClick={onComplete}><Check size={16}/></button><div className="reminder-info"><strong>{r.title}</strong>{r.description&&<p>{r.description}</p>}<div className="reminder-meta"><span><MapPin size={13}/>{place?.name||'Place removed'}</span>{r.dueAt&&<span><Clock3 size={13}/>{new Date(r.dueAt).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</span>}{snoozed&&<span className="snooze-label"><Clock3 size={13}/>Snoozed until {new Date(r.snoozedUntil).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})}</span>}</div></div><div className="row-actions"><button title="Snooze 30 minutes" aria-label="Snooze for 30 minutes" onClick={()=>onSnooze(30)}>30m</button><button title="Snooze 1 hour" aria-label="Snooze for 1 hour" onClick={()=>onSnooze(60)}>1h</button><button title="Edit reminder" aria-label="Edit reminder" onClick={onEdit}><Pencil size={15}/></button><button title="Delete reminder" aria-label="Delete reminder" onClick={onDelete}><Trash2 size={15}/></button></div></article>}
+function ActivityRow({item:a}:{item:Activity}){const icon=a.text.startsWith('Completed')?<CheckCircle2 size={16}/>:a.text.startsWith('Simulated')?<MapPin size={16}/>:a.text.startsWith('Snoozed')?<Clock3 size={16}/>:<Bell size={16}/>;return <div className="activity-row"><span className="activity-icon">{icon}</span><div><strong>{a.text}</strong><time>{new Date(a.at).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</time></div></div>}
+function Dialog({title,children,onClose,wide=false}:{title:string;children:React.ReactNode;onClose:()=>void;wide?:boolean}){const dialogRef=useRef<HTMLElement>(null);useEffect(()=>{const dialog=dialogRef.current;const previous=document.activeElement as HTMLElement|null;const focusable=()=>dialog?.querySelectorAll<HTMLElement>('button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])');(focusable()?.[0]||dialog)?.focus();const handler=(e:KeyboardEvent)=>{if(e.key==='Escape'){onClose();return}if(e.key==='Tab'){const items=focusable();if(!items?.length)return;const first=items[0],last=items[items.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}};window.addEventListener('keydown',handler);return()=>{window.removeEventListener('keydown',handler);previous?.focus()}},[onClose]);return <div className="modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)onClose()}}><section ref={dialogRef} className={`dialog ${wide?'wide':''}`} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1}><div className="dialog-heading"><h2>{title}</h2><button className="icon-btn" aria-label="Close dialog" onClick={onClose}><X size={19}/></button></div>{children}</section></div>}
 export default App
