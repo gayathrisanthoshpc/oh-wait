@@ -15,7 +15,7 @@
   --ease-ui: cubic-bezier(.22, 1, .36, 1);
   color: var(--ink);
   background: var(--paper);
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 15px;
 }
 
@@ -31,17 +31,18 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .sidebar { width: 248px; }
 .main-area { margin-left: 248px; }
 .page-content { padding: 36px 40px 56px; }
-.brand { font-weight: 600; color: var(--ink); }
+.brand { font-family: inherit; font-weight: 600; color: var(--ink); }
+.brand small { font-family: inherit; }
 .brand small, .profile small { color: var(--ink-muted); }
 .brand-mark { background: var(--moss); color: white; border-radius: 8px; }
 .side-label, .eyebrow, .place-category { color: var(--ink-muted); font-size: 12px; font-weight: 500; letter-spacing: 0; text-transform: none; }
 .nav-item { min-height: 36px; border-radius: 8px; color: var(--ink-secondary); }
-.nav-item.selected { color: var(--moss-ink); background: var(--moss-wash); box-shadow: inset 2px 0 var(--moss); }
+.nav-item.selected { color: var(--moss-ink); background: var(--moss-wash); box-shadow: inset 2px 0 var(--moss); font-weight: 500; }
 .simulation-note { background: var(--surface-raised); border: 1px solid var(--line); border-radius: 10px; }
 .pulse-dot { background: var(--moss); box-shadow: none; }
 .profile { border-color: var(--line); }
 
-.welcome h1, .page-heading h1 { color: var(--ink); font-weight: 600; letter-spacing: -.02em; }
+.welcome h1, .page-heading h1 { color: var(--ink); font-family: inherit; font-weight: 600; letter-spacing: -.02em; }
 .welcome h1 span { color: inherit; }
 .welcome-copy, .page-heading p { color: var(--ink-secondary); font-size: 15px; line-height: 1.55; }
 .button { min-height: 44px; border-radius: var(--radius-control); font-weight: 500; transition: color 150ms var(--ease-ui), background-color 150ms var(--ease-ui), border-color 150ms var(--ease-ui); }
@@ -52,7 +53,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .button:disabled { cursor: not-allowed; opacity: .55; }
 .panel, .place-card, .dialog, .stat-card { border-color: var(--line); border-radius: var(--radius-card); background: var(--surface); box-shadow: 0 1px 2px #22251b08; }
 .welcome, .page-heading { margin-bottom: 28px; }
-.section-heading h2, .place-card h3, .settings-card h2 { color: var(--ink); font-weight: 600; }
+.section-heading h2, .place-card h3, .settings-card h2 { color: var(--ink); font-family: inherit; font-weight: 600; }
+.stat-card strong, .empty-state h3, .activity-empty strong, .arrival-banner h3, .dialog-heading h2, .arrival-dialog-intro h3, .arrival-empty strong { font-family: inherit; font-weight: 500; }
 .section-heading { align-items: center; }
 .section-heading h2 { margin-top: 4px; }
 .reminder-row { border-color: var(--line); }
@@ -67,7 +69,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .place-reminder-links > div > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .place-reminder-links small { padding-left: 28px; color: var(--ink-muted); font-size: 12px; }
 .row-actions { opacity: 1; }
-.row-actions button { color: var(--ink-secondary); min-width: 36px; min-height: 36px; border-radius: 6px; }
+.row-actions button { color: var(--ink-secondary); min-width: 36px; min-height: 36px; border-radius: 6px; font-size: 12px; font-weight: 500; }
 .row-actions button:hover { background: var(--surface-raised); color: var(--ink); }
 .done-button { border-radius: 7px; }
 .overdue-label { color: #8d4039 !important; font-weight: 600; }
@@ -128,6 +130,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .sidebar { width: 216px; }
   .main-area { margin-left: 216px; }
   .page-content { padding: 32px 24px 48px; }
+  .home-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (max-width: 600px) {
@@ -142,8 +145,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .stat-card > span { font-size: 12px; line-height: 1.35; }
   .mobile-nav { padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); }
   .mobile-nav button { font-size: 11px; gap: 3px; min-height: 52px; }
-  .reminder-row { align-items: flex-start; }
-  .row-actions { flex-wrap: wrap; }
+  .reminder-row:has(.done-button) { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 8px 12px; }
+  .reminder-row:has(.done-button) .done-button { grid-column: 1; grid-row: 1; }
+  .reminder-row:has(.done-button) .reminder-info { grid-column: 2; grid-row: 1; min-width: 0; }
+  .reminder-row:has(.done-button) .row-actions { grid-column: 2; grid-row: 2; justify-self: start; flex-wrap: wrap; }
   .row-actions button { min-width: 36px; min-height: 36px; }
   .place-card { padding: 16px; }
   .arrival-match { align-items: flex-start; flex-direction: column; }
