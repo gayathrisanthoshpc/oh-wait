@@ -19,7 +19,7 @@ const chromeCandidates = [
 let chromePath = ''
 for (const candidate of chromeCandidates) { try { await access(candidate); chromePath = candidate; break } catch {} }
 assert.ok(chromePath, 'Install Chrome or Edge to run the browser smoke test.')
-const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', '--host', '127.0.0.1', '--port', String(devPort), '--strictPort'], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] })
+const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--host', '127.0.0.1', '--port', String(devPort), '--strictPort'], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] })
 server.stdout.on('data', chunk => process.stdout.write(chunk))
 server.stderr.on('data', chunk => process.stderr.write(chunk))
 server.on('error', error => console.error('Vite launch failed:', error))
@@ -28,6 +28,7 @@ const browser = spawn(chromePath, ['--headless=new', '--disable-gpu', '--no-firs
 let socket
 try {
   await waitFor(async () => (await fetch(`http://127.0.0.1:${devPort}/`)).ok, 'Vite server')
+  const manifestResponse = await fetch(`http://127.0.0.1:${devPort}/manifest.webmanifest`); assert.equal(manifestResponse.ok, true, 'The production app should serve its PWA manifest'); const manifest = await manifestResponse.json(); assert.equal(manifest.name, 'Oh, Wait! — Everyday reminders'); assert.equal(manifest.icons.length >= 2, true, 'The install manifest should provide app icons')
   const target = await waitFor(async () => {
     const response = await fetch(`http://127.0.0.1:${debugPort}/json/new?about:blank`, { method: 'PUT' })
     return response.ok ? response.json() : false
@@ -121,8 +122,9 @@ try {
   await action("[...document.querySelectorAll('.place-card')].find(c=>c.innerText.includes('Neighborhood Pharmacy')).querySelector('.simulate').click()"); await waitForText('Pick up my prescription'); assert.equal((await evaluate('document.querySelector(".dialog").innerText')).includes('Get milk and bread'),false,'Demo arrival should only include matching-place examples'); await clickText('Done')
   await clickText('Settings'); await clickText('Clear all app data'); await waitForText('Clear your Oh, Wait! data?'); await clickText('Clear data'); await waitForText('Your app data has been cleared.')
   assert.equal(await evaluate("localStorage.getItem('unrelated:test-key')"), 'keep me', 'Clearing demo data must retain unrelated localStorage entries')
+  await waitFor(async()=>await evaluate("navigator.serviceWorker.ready.then(reg=>!!reg.active)"), 'service worker activation'); await send('Page.reload'); await waitFor(async()=>await evaluate('!!navigator.serviceWorker.controller'), 'offline app shell control'); await send('Network.enable'); await send('Network.emulateNetworkConditions', { offline:true, latency:0, downloadThroughput:0, uploadThroughput:0 }); await send('Page.reload'); await waitForText('YOUR DAY, A LITTLE LIGHTER'); await send('Network.emulateNetworkConditions', { offline:false, latency:0, downloadThroughput:-1, uploadThroughput:-1 })
   assert.deepEqual(pageErrors, [], 'The browser console should not report JavaScript errors.')
-  console.log('Browser smoke test passed: first use, places, reminders, persistence, arrival filtering, completion, snooze/expiry, editing, reassignment, activity, clear-data isolation, and mobile overflow.')
+  console.log('Browser smoke test passed: app flows, reminders, places, favorites, undo, persistence, offline shell, accessibility, and mobile layout.')
 } finally {
   socket?.close()
   browser.kill()

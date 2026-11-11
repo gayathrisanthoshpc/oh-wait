@@ -1,32 +1,30 @@
-# React + TypeScript + Vite
+# Oh, Wait!
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+**Remember it when it matters.** A local-first reminder app for everyday tasks tied to the places where they need to get done.
 
-Currently, two official plugins are available:
+## Run locally
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```sh
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Verify a change
+
+```sh
+npm run lint
+npm run build
+npm test
+```
+
+The browser workflow test builds the production app and uses Chrome or Edge in headless mode. It checks the main reminder and place flows, persistence, accessibility, mobile sizing, and offline app-shell loading.
+
+## Offline and privacy
+
+Oh, Wait! can be installed from browsers that support web app installation. After the first successful online visit, its service worker caches the production app shell so it can open offline. Reminders and places are kept in this browser's local storage; they do not sync to an account or backend.
+
+Arrival remains an explicit **Simulate Arrival** action. The web prototype does not request location access or provide automatic geofencing or native push notifications.
+
+## Build for deployment
+
+`npm run build` creates the static production site in `dist/`, ready to deploy to Vercel or another static host.
