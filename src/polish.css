@@ -49,6 +49,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .button.primary:hover { background: var(--moss-ink); border-color: var(--moss-ink); }
 .button.secondary, .icon-btn { background: var(--surface); border-color: var(--line); color: var(--ink-secondary); }
 .button.secondary:hover, .icon-btn:hover { background: var(--surface-raised); color: var(--ink); }
+.button:disabled { cursor: not-allowed; opacity: .55; }
 .panel, .place-card, .dialog, .stat-card { border-color: var(--line); border-radius: var(--radius-card); background: var(--surface); box-shadow: 0 1px 2px #22251b08; }
 .welcome, .page-heading { margin-bottom: 28px; }
 .section-heading h2, .place-card h3, .settings-card h2 { color: var(--ink); font-weight: 600; }
@@ -68,6 +69,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .row-actions { opacity: 1; }
 .row-actions button { color: var(--ink-secondary); min-width: 36px; min-height: 36px; border-radius: 6px; }
 .row-actions button:hover { background: var(--surface-raised); color: var(--ink); }
+.done-button { border-radius: 7px; }
+.overdue-label { color: #8d4039 !important; font-weight: 600; }
+.snooze-label { color: var(--moss-ink) !important; }
+.due-later-label { color: var(--ink-secondary) !important; }
 .stat-icon { background: transparent !important; color: var(--ink-secondary); }
 .stat-arrow { display: none; }
 .stats { display: flex; gap: 0; margin: 0 0 24px; padding: 12px 0; border-block: 1px solid var(--line); }
@@ -88,6 +93,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .place-card h3 { display: flex; align-items: center; gap: 8px; }
 .place-card-top { align-items: center; }
 .favorite-tag { background: var(--surface-raised); color: var(--ink-secondary); border-radius: 5px; font-size: 11px; font-weight: 500; }
+.field-hint { margin: -8px 0 4px; color: var(--ink-secondary); font-size: 13px; line-height: 1.4; }
+.inline-help { color: var(--ink-secondary); font-size: 13px; line-height: 1.45; }
 .place-card-footer { border-color: var(--line); color: var(--ink-secondary); }
 .favorite-button.is-favorite { color: var(--moss-ink); }
 .place-actions { display: flex; gap: 8px; opacity: 1; }
@@ -134,7 +141,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .stat-card strong { font-size: 22px; line-height: 1.2; }
   .stat-card > span { font-size: 12px; line-height: 1.35; }
   .mobile-nav { padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); }
-  .mobile-nav button { font-size: 10px; gap: 3px; }
+  .mobile-nav button { font-size: 11px; gap: 3px; min-height: 52px; }
   .reminder-row { align-items: flex-start; }
   .row-actions { flex-wrap: wrap; }
   .row-actions button { min-width: 36px; min-height: 36px; }
