@@ -19,6 +19,8 @@ export function useOhWaitData() {
     setStorageWarning(!persist(next))
   }
 
+  function restoreData(snapshot: Data) { updateData(snapshot) }
+
   function saveReminder(form: FormData, editing: Reminder | Place | null) {
     const title = String(form.get('title') || '').trim()
     const placeId = String(form.get('placeId') || '')
@@ -123,5 +125,5 @@ export function useOhWaitData() {
     return true
   }
 
-  return { data, storageWarning, updateData, saveReminder, savePlace, completeReminder, snoozeReminder, deleteReminder, recordArrival, deletePlace, toggleFavorite, clearData, loadDemoData }
+  return { data, storageWarning, updateData, restoreData, saveReminder, savePlace, completeReminder, snoozeReminder, deleteReminder, recordArrival, deletePlace, toggleFavorite, clearData, loadDemoData }
 }
