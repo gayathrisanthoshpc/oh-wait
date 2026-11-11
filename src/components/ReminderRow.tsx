@@ -19,8 +19,8 @@ export function ReminderRow({ reminder:r, place, onComplete, onEdit, onSnooze, o
     </div>
     <div className="row-actions">
       {r.status === 'active' && <>
-        <button title="Snooze 30 minutes" aria-label="Snooze for 30 minutes" onClick={()=>onSnooze(30)}>30m</button>
-        <button title="Snooze 1 hour" aria-label="Snooze for 1 hour" onClick={()=>onSnooze(60)}>1h</button>
+        <button title={`Snooze ${r.title} for 30 minutes`} aria-label={`Snooze ${r.title} for 30 minutes`} onClick={()=>onSnooze(30)}>30m</button>
+        <button title={`Snooze ${r.title} for 1 hour`} aria-label={`Snooze ${r.title} for 1 hour`} onClick={()=>onSnooze(60)}>1h</button>
       </>}
       <button title="Edit reminder" aria-label="Edit reminder" onClick={onEdit}><Pencil size={15}/></button>
       <button title="Delete reminder" aria-label="Delete reminder" onClick={onDelete}><Trash2 size={15}/></button>

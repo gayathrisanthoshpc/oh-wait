@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useId, useRef } from 'react'
 import { X } from 'lucide-react'
 
 export function Dialog({ title, children, onClose, wide=false }: { title:string; children:React.ReactNode; onClose:()=>void; wide?:boolean }) {
   const dialogRef = useRef<HTMLElement>(null)
+  const headingId = useId()
   useEffect(() => {
     const dialog = dialogRef.current
     const previous = document.activeElement as HTMLElement | null
@@ -22,8 +23,8 @@ export function Dialog({ title, children, onClose, wide=false }: { title:string;
     return () => { window.removeEventListener('keydown', handler); previous?.focus() }
   }, [onClose])
   return <div className="modal-backdrop" onMouseDown={event=>{if(event.target===event.currentTarget)onClose()}}>
-    <section ref={dialogRef} className={`dialog ${wide?'wide':''}`} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1}>
-      <div className="dialog-heading"><h2>{title}</h2><button className="icon-btn" aria-label="Close dialog" onClick={onClose}><X size={19}/></button></div>
+    <section ref={dialogRef} className={`dialog ${wide?'wide':''}`} role="dialog" aria-modal="true" aria-labelledby={headingId} tabIndex={-1}>
+      <div className="dialog-heading"><h2 id={headingId}>{title}</h2><button className="icon-btn" aria-label="Close dialog" onClick={onClose}><X size={19}/></button></div>
       {children}
     </section>
   </div>

@@ -56,6 +56,7 @@ try {
   await send('Page.enable'); await send('Runtime.enable'); await send('Log.enable'); await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true })
   await send('Page.navigate', { url: `http://127.0.0.1:${devPort}/` })
   await waitForText("You're all caught up!")
+  await pressKey('Tab',0,9); assert.equal(await evaluate("document.activeElement.classList.contains('skip-link')"), true, 'Keyboard users should reach the skip link first'); await pressKey('Enter',0,13); assert.equal(await evaluate("document.activeElement.id"), 'main-content', 'The skip link should focus the main content')
   assert.equal(await evaluate("localStorage.getItem('oh-wait:data:v1')"), null, 'First use must not silently create demo records')
   assert.equal(await evaluate('document.documentElement.scrollWidth <= innerWidth'), true, 'Mobile view must not overflow horizontally')
   await send('Emulation.setDeviceMetricsOverride', { width:320,height:844,deviceScaleFactor:1,mobile:true }); assert.equal(await evaluate('document.documentElement.scrollWidth <= innerWidth'), true, '320px mobile view must not overflow horizontally')
