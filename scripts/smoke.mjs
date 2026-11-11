@@ -69,7 +69,7 @@ try {
   await fill('input[name="name"]', 'Neighborhood Pharmacy')
   await fill('input[name="category"]', 'Pharmacy')
   await clickText('Save place'); await waitForText('Neighborhood Pharmacy')
-  await clickLabel('My Places'); await clickText('Add a place'); await fill('input[name="name"]', 'Corner Grocery'); await fill('input[name="category"]', 'Groceries'); await clickText('Save place'); await waitForText('Corner Grocery')
+  await clickLabel('My Places'); await clickText('Add a place'); await fill('input[name="name"]', 'Corner Grocery'); await fill('input[name="category"]', 'Groceries'); await clickText('Save place'); await waitForText('Corner Grocery'); await clickLabel('Add Corner Grocery to favorites'); assert.equal(await evaluate("JSON.parse(localStorage.getItem('oh-wait:data:v1')).places.find(p=>p.name==='Corner Grocery').favorite"), true, 'Favorite state should be saved locally'); await send('Page.reload'); await waitForText('Corner Grocery'); await clickText('My Places'); assert.equal(await evaluate("document.querySelector('[aria-label=\"Remove Corner Grocery from favorites\"]')?.getAttribute('aria-pressed')"), 'true', 'Favorite state should persist after reload')
   await clickLabel('Home')
   await clickText('Add reminder'); await fill('input[name="title"]', 'Buy medicine')
   await fill('select[name="placeId"]', await evaluate("[...document.querySelector('select[name=placeId]').options].find(o=>o.text==='Neighborhood Pharmacy').value")); await clickText('Save reminder'); await waitForText('Buy medicine')

@@ -45,6 +45,7 @@ export function useOhWaitData() {
       category: String(form.get('category') || '').trim(),
       description: String(form.get('description') || '').trim(),
       createdAt: old?.createdAt || new Date().toISOString(),
+      favorite: old?.favorite || false,
     }
     updateData({ ...data, places: old ? data.places.map(item => item.id === old.id ? place : item) : [...data.places, place], activity: [event(`${old ? 'Edited' : 'Added'} place: ${name}`), ...data.activity] })
     return true
@@ -95,6 +96,11 @@ export function useOhWaitData() {
     return true
   }
 
+  function toggleFavorite(place: Place) {
+    const favorite = !place.favorite
+    updateData({ ...data, places:data.places.map(item => item.id === place.id ? { ...item, favorite } : item), activity:[event(`${favorite ? 'Favorited' : 'Unfavorited'} place: ${place.name}`), ...data.activity] })
+  }
+
   function clearData() {
     try {
       localStorage.removeItem(DATA_KEY)
@@ -117,5 +123,5 @@ export function useOhWaitData() {
     return true
   }
 
-  return { data, storageWarning, updateData, saveReminder, savePlace, completeReminder, snoozeReminder, deleteReminder, recordArrival, deletePlace, clearData, loadDemoData }
+  return { data, storageWarning, updateData, saveReminder, savePlace, completeReminder, snoozeReminder, deleteReminder, recordArrival, deletePlace, toggleFavorite, clearData, loadDemoData }
 }

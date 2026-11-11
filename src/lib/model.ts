@@ -1,4 +1,4 @@
-export type Place = { id: string; name: string; category: string; description: string; createdAt: string }
+export type Place = { id: string; name: string; category: string; description: string; createdAt: string; favorite?: boolean }
 export type RepeatFrequency = 'none' | 'daily' | 'weekly' | 'monthly'
 export type Reminder = { id: string; title: string; description: string; placeId: string; createdAt: string; dueAt: string; status: 'active' | 'completed'; snoozedUntil: string; repeat?: RepeatFrequency }
 export type Activity = { id: string; type: string; text: string; at: string }
@@ -15,7 +15,7 @@ function normalizeData(serialized: string, strict: boolean): Data | null {
     const rawPlaces = Array.isArray(raw.places) ? raw.places : []
     const rawReminders = Array.isArray(raw.reminders) ? raw.reminders : []
     const rawActivity = Array.isArray(raw.activity) ? raw.activity : []
-    const places = rawPlaces.filter((p): p is Place => isObject(p) && isText(p.id) && isText(p.name) && p.name.trim().length > 0 && isText(p.createdAt)).map(p => ({ id:p.id, name:p.name, category:isText(p.category)?p.category:'', description:isText(p.description)?p.description:'', createdAt:p.createdAt }))
+    const places = rawPlaces.filter((p): p is Place => isObject(p) && isText(p.id) && isText(p.name) && p.name.trim().length > 0 && isText(p.createdAt)).map(p => ({ id:p.id, name:p.name, category:isText(p.category)?p.category:'', description:isText(p.description)?p.description:'', createdAt:p.createdAt, favorite:p.favorite === true }))
     const placeIds = new Set(places.map(p => p.id))
     const reminders = rawReminders.filter((r): r is Reminder => isObject(r) && isText(r.id) && isText(r.title) && r.title.trim().length > 0 && isText(r.placeId) && placeIds.has(r.placeId) && isText(r.createdAt) && (r.status === 'active' || r.status === 'completed')).map(r => ({ id:r.id, title:r.title, description:isText(r.description)?r.description:'', placeId:r.placeId, createdAt:r.createdAt, dueAt:isText(r.dueAt)?r.dueAt:'', status:r.status, snoozedUntil:isText(r.snoozedUntil)?r.snoozedUntil:'', repeat:(r.repeat === 'daily' || r.repeat === 'weekly' || r.repeat === 'monthly' ? r.repeat : 'none') as RepeatFrequency }))
     const activity = rawActivity.filter((a): a is Activity => isObject(a) && isText(a.id) && isText(a.text) && isText(a.at)).map(a => ({id:a.id,type:isText(a.type)?a.type:'Activity',text:a.text,at:a.at})).slice(0,250)
