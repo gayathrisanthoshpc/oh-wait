@@ -5,6 +5,7 @@ import {
   ShieldCheck, Sparkles, Trash2, X, Pencil, ListTodo, Activity as ActivityIcon, Star,
 } from 'lucide-react'
 import './App.css'
+import './polish.css'
 import { parseData, type Activity, type Data, type Place, type Reminder } from './lib/model'
 import { useOhWaitData } from './hooks/useOhWaitData'
 import { ReminderRow } from './components/ReminderRow'
