@@ -9,6 +9,7 @@ export function ReminderRow({ reminder:r, place, onComplete, onEdit, onSnooze, o
     <div className="reminder-info">
       <strong>{r.title}</strong>
       {r.description && <p>{r.description}</p>}
+      {r.repeat && r.repeat !== 'none' && <span className="repeat-label">Repeats {r.repeat}</span>}
       <div className="reminder-meta">
         <span><MapPin size={13}/>{place?.name || 'Place removed'}</span>
         {dueLater && <span className="due-later-label"><Clock3 size={13}/>Due {new Date(r.dueAt).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</span>}

@@ -30,6 +30,7 @@ export function useOhWaitData() {
       placeId, createdAt: old?.createdAt || new Date().toISOString(),
       dueAt: String(form.get('dueAt') || ''), status: old?.status || 'active',
       snoozedUntil: old?.snoozedUntil || '',
+      repeat: (['daily', 'weekly', 'monthly'].includes(String(form.get('repeat'))) ? String(form.get('repeat')) as Reminder['repeat'] : 'none'),
     }
     updateData({ ...data, reminders: old ? data.reminders.map(item => item.id === old.id ? reminder : item) : [reminder, ...data.reminders], activity: [event(`${old ? 'Edited' : 'Created'} reminder: ${title}`), ...data.activity] })
     return true
@@ -50,7 +51,15 @@ export function useOhWaitData() {
   }
 
   function completeReminder(reminder: Reminder) {
-    updateData({ ...data, reminders: data.reminders.map(item => item.id === reminder.id ? { ...item, status:'completed', snoozedUntil:'' } : item), activity: [event(`Completed reminder: ${reminder.title}`), ...data.activity] })
+    const completed = { ...reminder, status:'completed' as const, snoozedUntil:'' }
+    const nextDue = reminder.repeat && reminder.repeat !== 'none' ? new Date(Math.max(clockNow(), reminder.dueAt ? new Date(reminder.dueAt).valueOf() : clockNow())) : null
+    if (nextDue) {
+      if (reminder.repeat === 'daily') nextDue.setDate(nextDue.getDate() + 1)
+      if (reminder.repeat === 'weekly') nextDue.setDate(nextDue.getDate() + 7)
+      if (reminder.repeat === 'monthly') nextDue.setMonth(nextDue.getMonth() + 1)
+    }
+    const nextOccurrence: Reminder | null = nextDue ? { ...reminder, id:uid(), createdAt:new Date().toISOString(), dueAt:nextDue.toISOString(), status:'active', snoozedUntil:'' } : null
+    updateData({ ...data, reminders: [...data.reminders.map(item => item.id === reminder.id ? completed : item), ...(nextOccurrence ? [nextOccurrence] : [])], activity: [event(nextOccurrence ? `Completed recurring reminder: ${reminder.title}; next one scheduled` : `Completed reminder: ${reminder.title}`), ...data.activity] })
   }
 
   function snoozeReminder(reminder: Reminder, minutes: number) {

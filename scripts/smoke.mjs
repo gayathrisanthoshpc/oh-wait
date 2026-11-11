@@ -20,8 +20,10 @@ let chromePath = ''
 for (const candidate of chromeCandidates) { try { await access(candidate); chromePath = candidate; break } catch {} }
 assert.ok(chromePath, 'Install Chrome or Edge to run the browser smoke test.')
 const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', '--host', '127.0.0.1', '--port', String(devPort), '--strictPort'], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] })
+server.stdout.on('data', chunk => process.stdout.write(chunk))
 server.stderr.on('data', chunk => process.stderr.write(chunk))
 server.on('error', error => console.error('Vite launch failed:', error))
+server.on('exit', (code, signal) => { if (code !== null && code !== 0) console.error(`Vite exited with code ${code}${signal ? ` (${signal})` : ''}.`) })
 const browser = spawn(chromePath, ['--headless=new', '--disable-gpu', '--no-first-run', '--no-default-browser-check', '--no-sandbox', '--remote-allow-origins=*', `--remote-debugging-port=${debugPort}`, `--user-data-dir=${tempProfile}`, 'about:blank'], { stdio: 'ignore' })
 let socket
 try {
@@ -103,6 +105,8 @@ try {
   const backup = JSON.parse(await readFile(path.join(tempProfile, backupName), 'utf8')); assert.equal(backup.version, 1); assert.equal(backup.places.length, 2, 'Exported backup should include the saved places')
   await chooseBackup({ version:1, places:[{id:'backup-place',name:'Backup Pharmacy',category:'Pharmacy',description:'Restored from backup',createdAt:new Date().toISOString()}], reminders:[], activity:[] }); await waitForText('Your backup has been restored.')
   await clickText('Settings'); await chooseBackup('{ invalid json'); await waitForText('not a valid Oh, Wait! backup'); await clickLabel('My Places'); await waitForText('Backup Pharmacy')
+  await clickLabel('Home'); await clickText('Add reminder'); await fill('input[name="title"]', 'Take daily vitamins'); await fill('select[name="placeId"]', 'backup-place'); await fill('select[name="repeat"]', 'daily'); await clickText('Save reminder'); await waitForText('Take daily vitamins'); await clickLabel('Complete Take daily vitamins'); await waitForText('next one scheduled')
+  const repeated = await evaluate("JSON.parse(localStorage.getItem('oh-wait:data:v1')).reminders.filter(r=>r.title==='Take daily vitamins')"); assert.equal(repeated.length, 2, 'Completing a repeating reminder should preserve the completed occurrence and create its next one'); assert.equal(repeated.filter(r=>r.status==='active').length, 1); assert.equal(repeated.find(r=>r.status==='active').repeat, 'daily')
   await clickText('Settings'); await clickText('Clear all app data'); await waitForText('Clear your Oh, Wait! data?'); await clickText('Clear data'); await waitForText('Your app data has been cleared.')
   assert.equal(await evaluate("localStorage.getItem('unrelated:test-key')"), 'keep me', 'Clear data must retain unrelated localStorage entries')
   await clickLabel('My Places'); await waitForText('Every reminder needs a place')
@@ -123,4 +127,4 @@ try {
 }
 
 async function freePort() { const server = createServer(); await new Promise(resolve => server.listen(0, '127.0.0.1', resolve)); const port = server.address().port; await new Promise(resolve => server.close(resolve)); return port }
-async function waitFor(check, name) { for (let i = 0; i < 80; i++) { try { const value = await check(); if (value) return value } catch {} await delay(250) } throw new Error(`Timed out waiting for ${name}`) }
+async function waitFor(check, name) { let lastError; for (let i = 0; i < 80; i++) { try { const value = await check(); if (value) return value } catch (error) { lastError = error } await delay(250) } if (lastError) console.error(`Last error while waiting for ${name}:`, lastError); throw new Error(`Timed out waiting for ${name}`) }
