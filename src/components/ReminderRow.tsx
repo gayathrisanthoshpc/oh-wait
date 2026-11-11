@@ -4,6 +4,7 @@ import type { Place, Reminder } from '../lib/model'
 export function ReminderRow({ reminder:r, place, onComplete, onEdit, onSnooze, onDelete, now }: { reminder:Reminder; place?:Place; onComplete:()=>void; onEdit:()=>void; onSnooze:(minutes:number)=>void; onDelete:()=>void; now:number }) {
   const snoozed = !!r.snoozedUntil && new Date(r.snoozedUntil).getTime() > now
   const dueLater = !!r.dueAt && new Date(r.dueAt).getTime() > now
+  const overdue = r.status === 'active' && !!r.dueAt && !dueLater && !snoozed
   return <article className="reminder-row">
     {r.status === 'active' && <button className="button done-button" aria-label={`Complete ${r.title}`} onClick={onComplete}><Check size={15}/>Done</button>}
     <div className="reminder-info">
@@ -12,8 +13,9 @@ export function ReminderRow({ reminder:r, place, onComplete, onEdit, onSnooze, o
       {r.repeat && r.repeat !== 'none' && <span className="repeat-label">Repeats {r.repeat}</span>}
       <div className="reminder-meta">
         <span><MapPin size={13}/>{place?.name || 'Place removed'}</span>
+        {overdue && <span className="overdue-label"><Clock3 size={13}/>Overdue · {new Date(r.dueAt).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</span>}
         {dueLater && <span className="due-later-label"><Clock3 size={13}/>Due {new Date(r.dueAt).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</span>}
-        {!dueLater && r.dueAt && <span><Clock3 size={13}/>{new Date(r.dueAt).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</span>}
+        {!dueLater && !overdue && r.dueAt && <span><Clock3 size={13}/>{new Date(r.dueAt).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</span>}
         {snoozed && <span className="snooze-label"><Clock3 size={13}/>Snoozed · until {new Date(r.snoozedUntil).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})}</span>}
       </div>
     </div>

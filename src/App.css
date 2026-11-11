@@ -16,3 +16,4 @@
 .toast .undo-button{margin-left:auto;padding:5px 9px;border:1px solid #68745d;border-radius:6px;color:#e3f3ce;font-weight:700}.toast .undo-button:hover{background:#46513d}
 .skip-link{position:fixed;z-index:50;top:10px;left:10px;padding:10px 14px;border-radius:8px;background:#30392b;color:#fff;font-weight:700;transform:translateY(-160%);transition:transform .16s}.skip-link:focus{transform:translateY(0)}#main-content:focus{outline:none}
 .install-card{background:#fafbf7}.install-card .button{margin-top:3px}
+.overdue-label{padding:3px 6px;border-radius:5px;background:#fbefec;color:#8f5148!important;font-weight:700}.overdue-label svg{color:#a65b50!important}
