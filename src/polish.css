@@ -94,6 +94,24 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .place-actions button { min-height: 36px; padding: 0 8px; border-radius: 6px; }
 .place-actions button, .text-button, .link-button { color: var(--moss-ink); }
 .activity-icon { color: var(--ink-secondary); background: var(--surface-raised); }
+.arrival-dialog-intro { padding: 4px 0 16px; border-bottom: 1px solid var(--line); }
+.arrival-dialog-intro .eyebrow { display: block; margin-bottom: 6px; }
+.arrival-dialog-intro h3 { margin: 0 0 4px; color: var(--ink); font-size: 20px; font-weight: 600; }
+.arrival-dialog-intro p { margin: 0; color: var(--ink-secondary); font-size: 13px; }
+.arrival-large-icon { color: var(--moss-ink); background: var(--moss-wash); }
+.arrival-matches { display: grid; gap: 0; }
+.arrival-match { gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+.arrival-task { display: flex; align-items: flex-start; gap: 10px; min-width: 0; }
+.arrival-task .checkpoint-marker { margin-top: 1px; }
+.arrival-task > div { min-width: 0; }
+.arrival-task strong { color: var(--ink); font-weight: 500; }
+.arrival-task p { margin: 4px 0 0; color: var(--ink-secondary); }
+.match-actions { flex-shrink: 0; }
+.match-actions .icon-btn { min-width: 40px; min-height: 36px; }
+.arrival-empty { padding: 24px 12px; text-align: center; }
+.arrival-empty strong { color: var(--ink); font-weight: 500; }
+.arrival-empty p { color: var(--ink-secondary); }
+.simulation-disclaimer { color: var(--ink-secondary); background: var(--surface-raised); border-radius: 8px; font-size: 12px; }
 .mobile-nav { box-shadow: 0 -1px 4px #22251b08; }
 .mobile-nav button { color: var(--ink-secondary); font-size: 11px; min-height: 52px; }
 .mobile-nav button.active { color: var(--moss-ink); }
@@ -121,6 +139,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .row-actions { flex-wrap: wrap; }
   .row-actions button { min-width: 36px; min-height: 36px; }
   .place-card { padding: 16px; }
+  .arrival-match { align-items: flex-start; flex-direction: column; }
+  .match-actions { align-self: flex-end; }
 }
 
 @media (prefers-reduced-motion: reduce) {
