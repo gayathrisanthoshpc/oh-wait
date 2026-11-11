@@ -12,7 +12,7 @@ export function ReminderRow({ reminder:r, place, onComplete, onEdit, onSnooze, o
       {r.description && <p>{r.description}</p>}
       {r.repeat && r.repeat !== 'none' && <span className="repeat-label">Repeats {r.repeat}</span>}
       <div className="reminder-meta">
-        <span><MapPin size={13}/>{place?.name || 'Place removed'}</span>
+        <span className="place-link"><span className="checkpoint-marker"><MapPin size={14}/></span><span>{place?.name || 'Place removed'}</span></span>
         {overdue && <span className="overdue-label"><Clock3 size={13}/>Overdue · {new Date(r.dueAt).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</span>}
         {dueLater && <span className="due-later-label"><Clock3 size={13}/>Due {new Date(r.dueAt).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</span>}
         {!dueLater && !overdue && r.dueAt && <span><Clock3 size={13}/>{new Date(r.dueAt).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</span>}

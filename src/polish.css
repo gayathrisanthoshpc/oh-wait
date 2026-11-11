@@ -58,6 +58,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .reminder-info > strong { color: var(--ink); font-weight: 500; }
 .reminder-info > p, .reminder-meta { color: var(--ink-secondary); }
 .reminder-meta > span { color: var(--ink-secondary); font-size: 12px; }
+.reminder-meta .place-link { display: inline-flex; align-items: center; gap: 6px; color: var(--moss-ink); font-weight: 500; }
+.checkpoint-marker { display: inline-grid; width: 20px; height: 20px; flex: 0 0 20px; place-items: center; color: var(--moss-ink); background: var(--moss-wash); border-radius: 50%; }
+.checkpoint-marker svg { width: 13px; height: 13px; stroke-width: 1.7; }
+.place-reminder-links { display: grid; gap: 8px; margin: 16px 0 4px; padding-left: 10px; border-left: 1px solid #a8b69a; }
+.place-reminder-links > div { display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--ink-secondary); font-size: 13px; }
+.place-reminder-links > div > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.place-reminder-links small { padding-left: 28px; color: var(--ink-muted); font-size: 12px; }
 .row-actions { opacity: 1; }
 .row-actions button { color: var(--ink-secondary); min-width: 36px; min-height: 36px; border-radius: 6px; }
 .row-actions button:hover { background: var(--surface-raised); color: var(--ink); }
@@ -82,6 +89,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .place-card-top { align-items: center; }
 .favorite-tag { background: var(--surface-raised); color: var(--ink-secondary); border-radius: 5px; font-size: 11px; font-weight: 500; }
 .place-card-footer { border-color: var(--line); color: var(--ink-secondary); }
+.favorite-button.is-favorite { color: var(--moss-ink); }
+.place-actions { display: flex; gap: 8px; opacity: 1; }
+.place-actions button { min-height: 36px; padding: 0 8px; border-radius: 6px; }
 .place-actions button, .text-button, .link-button { color: var(--moss-ink); }
 .activity-icon { color: var(--ink-secondary); background: var(--surface-raised); }
 .mobile-nav { box-shadow: 0 -1px 4px #22251b08; }
